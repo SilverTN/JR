@@ -10,41 +10,19 @@ public class CipherController {
     private FileManager fileManager;
     private ConsoleView consoleView;
     private boolean isSaveCryptNewFile;  // Сохранять новый файл рядом
-    private int shift; // Сдвиг
+    private int shift;                   // Сдвиг
 
-    public CipherController() {
-        caesarCipher = new CaesarCipher();
-        fileManager = new FileManager();
-        consoleView = new ConsoleView();
-        this.isSaveCryptNewFile = true;
-        this.shift = 3;
-    }
-
-    public CipherController(int shift) {
-        // Инициализация объектов
-        caesarCipher = new CaesarCipher();
-        fileManager = new FileManager();
-        consoleView = new ConsoleView();
-        this.isSaveCryptNewFile = true;
-        this.shift = shift;
-    }
-
-    public CipherController(boolean isSaveCryptNewFile) {
-        // Инициализация объектов
-        caesarCipher = new CaesarCipher();
-        fileManager = new FileManager();
-        consoleView = new ConsoleView();
-        this.isSaveCryptNewFile = isSaveCryptNewFile;
-        this.shift = 3;
-    }
 
     public CipherController(int shift, boolean isSaveCryptNewFile) {
-        // Инициализация объектов
-        caesarCipher = new CaesarCipher();
-        fileManager = new FileManager();
-        consoleView = new ConsoleView();
+        this.caesarCipher = new CaesarCipher();
+        this.fileManager = new FileManager();
+        this.consoleView = new ConsoleView();
         this.isSaveCryptNewFile = isSaveCryptNewFile;
         this.shift = shift;
+    }
+
+    public CipherController() {
+        this(3, true); // значение по умолчанию: shift = 3, isSaveCryptNewFile = true
     }
 
     public void run() {
@@ -57,19 +35,21 @@ public class CipherController {
             switch (choice) {
                 case "1" -> encryptText();
                 case "2" -> decryptText();
-                case "3" -> running = false; // выход
+                case "3" -> decryptTextBrutForce();
+                case "4" -> running = false; // выход
                 default ->  consoleView.displayError("Неверный выбор, попробуйте снова.");
             }
-            System.out.println("Завершение работы программы");
         }
+        System.out.println("Завершение работы программы");
     }
 
     private void encryptText() {
-        /* обработка запроса на шифрование текста. */
+        /* Обработка запроса на шифрование текста. */
         String filePath = consoleView.getFilePathInput(); // Получаем путь к файлу от пользователя
-        String content = fileManager.readFile(filePath); // Читаем текст из файла
+        String content = fileManager.readFile(filePath);  // Читаем текст из файла
         if (content != null) {
-            String encrypted = caesarCipher.encrypt(content, shift);  // Шифруем текст и выводим результат используем сдвиг, например 3
+            consoleView.displayOrig(content);
+            String encrypted = caesarCipher.encrypt(content, shift);  // Шифруем текст и указываем сдвиг, например 3
             if(isSaveCryptNewFile)
                 fileManager.saveFileWithSuffix(filePath, encrypted, FileSuffix.ENCRYPTED); // Сохранение зашифрованного текста рядом с оригинальным файлом
             consoleView.displayResult(encrypted);
@@ -79,12 +59,12 @@ public class CipherController {
     }
 
     private void decryptText() {
-        /* обработка запроса на расшифровку текста */
+        /* Обработка запроса на расшифровку текста */
         String filePath = consoleView.getFilePathInput(); // Получаем путь к файлу от пользователя
-        String content = fileManager.readFile(filePath);
+        String content = fileManager.readFile(filePath);  // Читаем текст из файла
         if (content != null) {
-            // Расшифровка текста
-            String decrypted = caesarCipher.decrypt(content, -shift); // Используем тот же сдвиг
+            consoleView.displayOrig(content);
+            String decrypted = caesarCipher.decrypt(content, -shift); // Расшифровка текста. Сдвиг c минусом
             if(isSaveCryptNewFile)
                 fileManager.saveFileWithSuffix(filePath, decrypted, FileSuffix.DECRYPTED); // Сохранение зашифрованного текста рядом с оригинальным файлом
             consoleView.displayResult(decrypted);
@@ -93,5 +73,19 @@ public class CipherController {
         }
     }
 
+    private void decryptTextBrutForce() {
+        /* Обработка запроса на расшифровку текста методом грубой силы */
+        String filePath = consoleView.getFilePathInput(); // Получаем путь к файлу от пользователя
+        String content = fileManager.readFile(filePath);  // Читаем текст из файла
+        if (content != null) {
+            consoleView.displayOrig(content);
+            String decrypted = caesarCipher.decryptBruteForce(content); // Расшифровка текста.
+            if(isSaveCryptNewFile)
+                fileManager.saveFileWithSuffix(filePath, decrypted, FileSuffix.DECRYPTED); // Сохранение зашифрованного текста рядом с оригинальным файлом
+            consoleView.displayResult(decrypted);
+        } else {
+            consoleView.displayError("Не удалось прочитать файл.");
+        }
+    }
 
 }
