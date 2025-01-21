@@ -47,4 +47,8 @@ public class ConsoleView {
         System.err.println("Ошибка: " + message);
     }
 
+    public static void displayNumberShift(int shift){
+        System.out.println("=== КЛЮЧ ["+ shift +"] ====");
+    }
+
 }

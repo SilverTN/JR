@@ -1,5 +1,7 @@
 package Model;
 
+import View.ConsoleView;
+
 import java.util.*;
 
 public class CaesarCipher {
@@ -43,37 +45,38 @@ public class CaesarCipher {
         return convertText(text, shift);
     }
 
+    private void mapingSlovar(Set<String> hDictionaryWords, List<Integer> list, String partText){
+        for (int i = 0; i < ALPHABET.length; i++) {
+            list.add(i,0);
+            String[] splitText = decrypt(partText, -i).replaceAll("[^A-Za-zА-Яа-я0-9]", " ").split(" ");
+
+            int matchCount = 0; // Количество совпадений с словарём
+            for (String word : splitText) {
+                if (hDictionaryWords.contains(word))
+                    matchCount++;
+            }
+            list.set(i, matchCount);
+        }
+    }
+
     public String decryptBruteForce(String text) {
         /* расшифровка текста Взлом (Brute Force) */
-        HashSet<String> hDictionaryWords = loadDictionaryWords();
-        ArrayList<Integer> maxMatchesShift = new ArrayList<>();
+        Set<String> hDictionaryWords = loadDictionaryWords(); // Грузим Словарь
+        List<Integer> maxMatchesShift = new ArrayList<>(); // Список количества совпадений после мапинга по словарю
 
-        String partText = text.substring(1,300);  // Часть текста
-        for (int i = 0; i < ALPHABET.length; i++) {
-           maxMatchesShift.add(i,0);
-           String[] splitText = convertText(partText, -i).replaceAll("[^A-Za-zА-Яа-я0-9]", " ").toLowerCase().split(" ");
-           for (int j = 0; j < splitText.length; j++) {
-              if (hDictionaryWords.contains(splitText[j].toLowerCase())){
-                     maxMatchesShift.set(i, maxMatchesShift.get(i) + 1);
-              }
-           }
-        }
+        String partText = text.substring(1,300).toLowerCase();  // Только часть текста для скорости подбора
+        mapingSlovar(hDictionaryWords, maxMatchesShift, partText);
 
-        int max = Collections.max(maxMatchesShift);
-        if (max == 0){
-            throw new IllegalArgumentException("Не удалось подобрать ключ");
-        }
+        int maxCountMatches = Collections.max(maxMatchesShift);
+        validateMaxCountMatches(maxCountMatches);
 
-        int shift = 0;
-        for (int i = 0; i < maxMatchesShift.size(); i++) {
-          if (maxMatchesShift.get(i) == max)
-              shift = i;
-        }
+        int shift = searhShiftOfList(maxMatchesShift, maxCountMatches);
 
-        System.out.println("=== КЛЮЧ ["+ shift +"] ====");
+        ConsoleView.displayNumberShift(shift);
         return convertText(text, -shift);
     }
 
+    // Чтение словаря
     private String dictionaryWords (){
         return FileManager.readDictionaryOfWords();
     }
@@ -107,6 +110,22 @@ public class CaesarCipher {
         }
 
         return new String(chNewText);
+    }
+
+    private int searhShiftOfList(List<Integer> list, int max){
+        // Поиск ключа
+        int shift = 0;
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i) == max)
+                shift = i;
+        }
+        return shift;
+    }
+
+    private void validateMaxCountMatches(int maxCountMatches) {
+        if (maxCountMatches == 0) {
+            throw new IllegalArgumentException("Не удалось подобрать ключ");
+        }
     }
 
 }
